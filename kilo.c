@@ -10,10 +10,17 @@
 #define CTRL_KEY(k) ((k) & 0x1f)
 
 /*** Data ***/
-struct termios orig_termios;
+struct editorConfig{
+	struct termios orig_termios;
+};
+
+struct editorConfig E;
 
 /*** Terminal ***/
 void die(const char *s){
+	write(STDOUT_FILENO, "\x1b[2j",4);
+	write(STDOUT_FILENO, "\x1b[h",3);
+
 	perror(s);
 	exit(1);
 }
@@ -51,11 +58,31 @@ char editorReadKey(){
 /*** Input ***/
 void editorProcessKeypress(){
 	char c = editorReadKey();
+
 	switch (c){
 		case CTRL_KEY('q'):
+			write(STDOUT_FILENO, "\x1b[2j",4);
+			write(STDOUT_FILENO, "\x1b[h",3);
 			exit(0);
 			break;
 	}
+}
+
+/*** Output ***/
+void editorDrawRows(){
+	int y;
+	for(y=0; y<24; y++){
+		write(STDOUT_FILENO, "~\r\n",3);
+	}
+}
+
+void editorRefreshScreen(){
+	write(STDOUT_FILENO, "\x1b[2j",4);
+	write(STDOUT_FILENO, "\x1b[h",3);
+
+	editorDrawRows();
+
+	write(STDOUT_FILENO, "\x1b[H", 3);
 }
 
 /*** Init ***/
@@ -63,6 +90,7 @@ int main(){
 	enableRawMode();
 
 	while(1){
+		editorRefreshScreen();
 		editorProcessKeypress();
 	}
 
